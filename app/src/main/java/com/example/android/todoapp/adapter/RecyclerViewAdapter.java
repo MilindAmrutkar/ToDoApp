@@ -19,7 +19,7 @@ import java.util.List;
 public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolders> {
 
     private List<Task> task;
-    protected Context context;
+    private Context context;
 
     public RecyclerViewAdapter(Context context, List<Task> task) {
         this.task = task;
@@ -30,14 +30,14 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewHolder
     @Override
     public RecyclerViewHolders onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         RecyclerViewHolders viewHolder = null;
-        View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.to_do_list, parent,false);
+        View layoutView = LayoutInflater.from(parent.getContext()).inflate(R.layout.to_do_list, parent, false);
         viewHolder = new RecyclerViewHolders(layoutView, task, context);
         return viewHolder;
     }
 
     @Override
     public void onBindViewHolder(@NonNull RecyclerViewHolders holder, int position) {
-        holder.categoryTitle.setText(task.get(position).getTask());
+        holder.categoryTitle.setText(task.get(position).getTaskTitle());
     }
 
     @Override

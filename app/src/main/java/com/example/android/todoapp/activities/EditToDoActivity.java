@@ -1,9 +1,8 @@
 package com.example.android.todoapp.activities;
 
 import android.content.Intent;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
@@ -13,17 +12,13 @@ import android.widget.Toast;
 
 import com.example.android.todoapp.R;
 import com.example.android.todoapp.model.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 
 public class EditToDoActivity extends AppCompatActivity {
     private static final String TAG = EditToDoActivity.class.getSimpleName();
-    private String todoTitle;
-    private EditText editText;
+    private String taskTitle, taskComment, taskId;
+    private EditText taskEditText, commentEditText;
     private Button saveButton, cancelButton;
 
 
@@ -31,52 +26,49 @@ public class EditToDoActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_to_do);
-        editText = findViewById(R.id.task_edit);
+        taskEditText = findViewById(R.id.task_edit);
+        commentEditText = findViewById(R.id.task_comment);
         saveButton = findViewById(R.id.save_edit);
         cancelButton = findViewById(R.id.cancel_edit);
 
         Bundle extras = getIntent().getExtras();
         if (extras == null) {
-            todoTitle = null;
+            taskTitle = null;
+            taskComment = null;
+            taskId = null;
         } else {
-            todoTitle = extras.getString("Task");
-            editText.setText(todoTitle);
+            taskId = extras.getString(MainActivity.TASK_ID);
+            taskTitle = extras.getString(MainActivity.TASK_TITLE);
+            taskComment = extras.getString(MainActivity.TASK_COMMENT);
+            Log.d(TAG, "extraId: " + taskId + " extraTitle: " + taskTitle + " extraComment: " + taskComment);
+            taskEditText.setText(taskTitle);
+            commentEditText.setText(taskComment);
         }
 
         saveButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                final String enteredTask = editText.getText().toString();
-                if (TextUtils.isEmpty(enteredTask)) {
-                    Toast.makeText(EditToDoActivity.this, "Please enter something!!!!", Toast.LENGTH_SHORT).show();
-                    return;
+
+                //getting new values from fields
+                final String enteredTask = taskEditText.getText().toString();
+                final String enteredComment = commentEditText.getText().toString();
+
+                String titleStatus = checkForEmptyFields(enteredTask);
+                String commentStatus = checkForEmptyFields(enteredComment);
+
+                Log.d(TAG, "onClick: titleStatus: " + titleStatus + " commentStatus: " + commentStatus);
+
+                if (titleStatus != null && commentStatus != null) {
+                    DatabaseReference ref = FirebaseDatabase.getInstance().getReference("tasks").child(taskId);
+
+                    Task task = new Task(taskId, enteredTask, enteredComment);
+
+                    ref.setValue(task);
+                    Toast.makeText(EditToDoActivity.this, "Changes updated", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(intent);
                 }
-
-                if (enteredTask.length() < 6) {
-                    Toast.makeText(EditToDoActivity.this, "Don't have such a small task", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-                Query query = ref.orderByChild("task").equalTo(todoTitle);
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                            Task task = new Task(enteredTask);
-                            snapshot.getRef().setValue(task);
-                            Toast.makeText(EditToDoActivity.this, "Changes saved :)", Toast.LENGTH_SHORT).show();
-                            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK |Intent.FLAG_ACTIVITY_NEW_TASK);
-                            startActivity(intent);
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Log.e(TAG, "onCancelled: ", databaseError.toException());
-                    }
-                });
             }
         });
 
@@ -86,6 +78,19 @@ public class EditToDoActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private String checkForEmptyFields(String editTextContent) {
+        if (TextUtils.isEmpty(editTextContent)) {
+            Toast.makeText(EditToDoActivity.this, "Please give me something!!!!", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+
+        if (editTextContent.length() < 6) {
+            Toast.makeText(EditToDoActivity.this, "Give me more than 6 characters :)", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+        return "OK";
     }
 
     @Override

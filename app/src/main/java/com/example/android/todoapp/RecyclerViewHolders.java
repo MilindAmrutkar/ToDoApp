@@ -2,7 +2,6 @@ package com.example.android.todoapp;
 
 import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
@@ -11,13 +10,10 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.android.todoapp.activities.EditToDoActivity;
+import com.example.android.todoapp.activities.MainActivity;
 import com.example.android.todoapp.model.Task;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.Query;
-import com.google.firebase.database.ValueEventListener;
 
 import java.util.List;
 
@@ -26,10 +22,10 @@ import java.util.List;
  */
 public class RecyclerViewHolders extends RecyclerView.ViewHolder {
 
-    public static final String TAG = RecyclerViewHolders.class.getSimpleName();
-    public ImageView markIcon;
+    private static final String TAG = RecyclerViewHolders.class.getSimpleName();
+    private ImageView markIcon;
     public TextView categoryTitle;
-    public ImageView deleteIcon;
+    private ImageView deleteIcon;
     private List<Task> taskObject;
     private Context context;
 
@@ -45,9 +41,10 @@ public class RecyclerViewHolders extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View view) {
                 Intent intent = new Intent(context, EditToDoActivity.class);
-                intent.putExtra("Task", taskObject.get(getAdapterPosition()).getTask());
+                intent.putExtra(MainActivity.TASK_ID, taskObject.get(getAdapterPosition()).getTaskId());
+                intent.putExtra(MainActivity.TASK_TITLE, taskObject.get(getAdapterPosition()).getTaskTitle());
+                intent.putExtra(MainActivity.TASK_COMMENT, taskObject.get(getAdapterPosition()).getTaskComment());
                 context.startActivity(intent);
-
             }
         });
 
@@ -55,23 +52,11 @@ public class RecyclerViewHolders extends RecyclerView.ViewHolder {
             @Override
             public void onClick(View view) {
                 Toast.makeText(view.getContext(), "Task deleted :) ", Toast.LENGTH_SHORT).show();
-                final String taskTitle = taskObject.get(getAdapterPosition()).getTask();
-                Log.d(TAG, "Task Title " + taskTitle);
-                DatabaseReference ref = FirebaseDatabase.getInstance().getReference();
-                Query query = ref.orderByChild("task").equalTo(taskTitle);
-                query.addListenerForSingleValueEvent(new ValueEventListener() {
-                    @Override
-                    public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                        for (DataSnapshot snapshot: dataSnapshot.getChildren()) {
-                            snapshot.getRef().removeValue();
-                        }
-                    }
-
-                    @Override
-                    public void onCancelled(@NonNull DatabaseError databaseError) {
-                        Log.e(TAG, "onCancelled", databaseError.toException());
-                    }
-                });
+                final String taskId = taskObject.get(getAdapterPosition()).getTaskId();
+                Log.d(TAG, "Task Id: " + taskId);
+                DatabaseReference ref = FirebaseDatabase.getInstance().getReference("tasks").child(taskId);
+                ref.removeValue();
+                Toast.makeText(context, "Task deleted", Toast.LENGTH_SHORT).show();
             }
         });
     }
