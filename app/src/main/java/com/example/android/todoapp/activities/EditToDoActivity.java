@@ -11,6 +11,7 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.example.android.todoapp.R;
+import com.example.android.todoapp.Utility;
 import com.example.android.todoapp.model.Task;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -69,6 +70,7 @@ public class EditToDoActivity extends AppCompatActivity {
                     intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);
                     startActivity(intent);
                 }
+                Utility.hideKeyboard(EditToDoActivity.this);
             }
         });
 
@@ -76,6 +78,7 @@ public class EditToDoActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 finish();
+                Utility.hideKeyboard(EditToDoActivity.this);
             }
         });
     }
